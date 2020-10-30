@@ -34,7 +34,6 @@ type ClusterSpec struct {
 
 	// LogLevel is the application log level.
 	// +kubebuilder:validation:Enum=info;debug;error
-	// +kubebuilder:default:=info
 	// +kubebuilder:validation:Optional
 	LogLevel string `json:"logLevel,omitempty"`
 }

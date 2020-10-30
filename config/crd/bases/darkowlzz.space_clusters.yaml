@@ -48,7 +48,6 @@ spec:
                   type: string
               type: object
             logLevel:
-              default: info
               description: LogLevel is the application log level.
               enum:
               - info
