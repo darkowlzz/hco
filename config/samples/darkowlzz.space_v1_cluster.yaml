@@ -5,3 +5,7 @@ metadata:
 spec:
   # Add fields here
   logLevel: info
+  images:
+    app: some-app-image
+    sidecarA: some-sidecarA-image
+    sidecarB: some-sidecarB-image
