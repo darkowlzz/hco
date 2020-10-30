@@ -22,6 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	conditions "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,6 +59,61 @@ func (r *ClusterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Initialize the cluster if uninitialized.
 	if init {
+		// Create an owner reference using the cluster.
+		ownerRef := metav1.OwnerReference{
+			APIVersion: cluster.APIVersion,
+			Kind:       cluster.Kind,
+			Name:       cluster.Name,
+			UID:        cluster.UID,
+		}
+
+		// Create App, SidecarA and SidecarB with cluster as the owner
+		// reference.
+		appInstance := &darkowlzzspacev1.App{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "app-" + cluster.Name,
+				Labels:          cluster.Labels,
+				Namespace:       cluster.Namespace,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
+			},
+			Spec: darkowlzzspacev1.AppSpec{
+				Image: cluster.Spec.Images.App,
+			},
+		}
+		if err := r.Create(ctx, appInstance); err != nil {
+			log.Info("failed to create app", "error", err)
+		}
+
+		sidecarA := &darkowlzzspacev1.SidecarA{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "sidecara-" + cluster.Name,
+				Labels:          cluster.Labels,
+				Namespace:       cluster.Namespace,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
+			},
+			Spec: darkowlzzspacev1.SidecarASpec{
+				Image: cluster.Spec.Images.SidecarA,
+			},
+		}
+		if err := r.Create(ctx, sidecarA); err != nil {
+			log.Info("failed to create sidecarA", "error", err)
+		}
+
+		sidecarB := &darkowlzzspacev1.SidecarB{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "sidecarb-" + cluster.Name,
+				Labels:          cluster.Labels,
+				Namespace:       cluster.Namespace,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
+			},
+			Spec: darkowlzzspacev1.SidecarBSpec{
+				Image: cluster.Spec.Images.SidecarB,
+			},
+		}
+		if err := r.Create(ctx, sidecarB); err != nil {
+			log.Info("failed to create sidecarB", "error", err)
+		}
+
 		conditions.SetStatusCondition(&cluster.Status.Conditions, conditions.Condition{
 			Type:    conditions.ConditionAvailable,
 			Status:  corev1.ConditionTrue,
