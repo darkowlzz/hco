@@ -28,8 +28,15 @@ type ClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Cluster. Edit Cluster_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Images contains the image reference for all the associated components.
+	// +kubebuilder:validation:Optional
+	Images ImageReference `json:"images,omitempty"`
+
+	// LogLevel is the application log level.
+	// +kubebuilder:validation:Enum=info;debug;error
+	// +kubebuilder:default:=info
+	// +kubebuilder:validation:Optional
+	LogLevel string `json:"logLevel,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
