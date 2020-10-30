@@ -4,4 +4,4 @@ metadata:
   name: cluster-sample
 spec:
   # Add fields here
-  foo: bar
+  logLevel: info
