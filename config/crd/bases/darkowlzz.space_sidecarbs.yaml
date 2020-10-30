@@ -36,13 +36,39 @@ spec:
         spec:
           description: SidecarBSpec defines the desired state of SidecarB
           properties:
-            foo:
-              description: Foo is an example field of SidecarB. Edit SidecarB_types.go
-                to remove/update
+            image:
+              description: Image is the sidecar's container image.
               type: string
           type: object
         status:
           description: SidecarBStatus defines the observed state of SidecarB
+          properties:
+            conditions:
+              items:
+                description: Condition represents the state of the operator's reconciliation
+                  functionality.
+                properties:
+                  lastHeartbeatTime:
+                    format: date-time
+                    type: string
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: ConditionType is the state of the operator's reconciliation
+                      functionality.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
           type: object
       type: object
   version: v1

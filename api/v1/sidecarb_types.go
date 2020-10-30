@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	conditions "github.com/openshift/custom-resource-status/conditions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,14 +29,20 @@ type SidecarBSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of SidecarB. Edit SidecarB_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Image is the sidecar's container image.
+	// +kubebuilder:validation:Optional
+	Image string `json:"image,omitempty"`
 }
 
 // SidecarBStatus defines the observed state of SidecarB
 type SidecarBStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// +kubebuilder:validation:Optional
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []conditions.Condition `json:"conditions,omitempty"  patchStrategy:"merge" patchMergeKey:"type"`
 }
 
 // +kubebuilder:object:root=true

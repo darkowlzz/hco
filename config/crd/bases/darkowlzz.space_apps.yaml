@@ -36,12 +36,39 @@ spec:
         spec:
           description: AppSpec defines the desired state of App
           properties:
-            foo:
-              description: Foo is an example field of App. Edit App_types.go to remove/update
+            image:
+              description: Image is the app's container image.
               type: string
           type: object
         status:
           description: AppStatus defines the observed state of App
+          properties:
+            conditions:
+              items:
+                description: Condition represents the state of the operator's reconciliation
+                  functionality.
+                properties:
+                  lastHeartbeatTime:
+                    format: date-time
+                    type: string
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: ConditionType is the state of the operator's reconciliation
+                      functionality.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
           type: object
       type: object
   version: v1
