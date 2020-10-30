@@ -1,0 +1,10 @@
+layout: go.kubebuilder.io/v2
+projectName: hco
+repo: github.com/darkowlzz/hco
+resources:
+- group: darkowlzz.space
+  kind: Cluster
+  version: v1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}
