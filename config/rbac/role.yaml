@@ -9,6 +9,26 @@ rules:
 - apiGroups:
   - darkowlzz.space
   resources:
+  - apps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - apps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - darkowlzz.space
+  resources:
   - clusters
   verbs:
   - create
@@ -22,6 +42,46 @@ rules:
   - darkowlzz.space
   resources:
   - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - sidecaras
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - sidecaras/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - sidecarbs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - sidecarbs/status
   verbs:
   - get
   - patch

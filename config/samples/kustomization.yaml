@@ -1,4 +1,7 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
 - darkowlzz.space_v1_cluster.yaml
+- darkowlzz.space_v1_app.yaml
+- darkowlzz.space_v1_sidecara.yaml
+- darkowlzz.space_v1_sidecarb.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

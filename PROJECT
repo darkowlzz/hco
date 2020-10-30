@@ -5,6 +5,15 @@ resources:
 - group: darkowlzz.space
   kind: Cluster
   version: v1
+- group: darkowlzz.space
+  kind: App
+  version: v1
+- group: darkowlzz.space
+  kind: SidecarA
+  version: v1
+- group: darkowlzz.space
+  kind: SidecarB
+  version: v1
 version: 3-alpha
 plugins:
   go.sdk.operatorframework.io/v2-alpha: {}

@@ -1,0 +1,7 @@
+apiVersion: darkowlzz.space/v1
+kind: SidecarA
+metadata:
+  name: sidecara-sample
+spec:
+  # Add fields here
+  foo: bar

@@ -1,0 +1,24 @@
+# permissions for end users to edit sidecaras.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sidecara-editor-role
+rules:
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - sidecaras
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - darkowlzz.space
+  resources:
+  - sidecaras/status
+  verbs:
+  - get
