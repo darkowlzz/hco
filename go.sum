@@ -45,10 +45,8 @@ github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfc
 github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
-github.com/darkowlzz/composite-reconciler v0.0.0-20201103201807-002401f81305 h1:9Lj3bppbsRNngpErUGab088H78U6xSzPB8ACiFe9Vbg=
-github.com/darkowlzz/composite-reconciler v0.0.0-20201103201807-002401f81305/go.mod h1:g9IECfWFno3wWFUu2faZGovpkAxC3difzfewfRGseBo=
-github.com/darkowlzz/composite-reconciler v0.0.0-20201103203354-e4c17729b9f5 h1:rkvHEfxcr8zgy4okYAOkeicNxeOekcn9FtG4PkY0iGA=
-github.com/darkowlzz/composite-reconciler v0.0.0-20201103203354-e4c17729b9f5/go.mod h1:g9IECfWFno3wWFUu2faZGovpkAxC3difzfewfRGseBo=
+github.com/darkowlzz/composite-reconciler v0.0.0-20201112064441-19572322ed9a h1:9CX/fqVIYCjCKVxUpUMIZA2BiOWPkKMRXMc7THi/nX8=
+github.com/darkowlzz/composite-reconciler v0.0.0-20201112064441-19572322ed9a/go.mod h1:yWl2zoKZvOoTNgVqeSpbToCTN5cMKu/huNi/rWkNzP4=
 github.com/davecgh/go-spew v0.0.0-20151105211317-5215b55f46b2/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -507,8 +505,6 @@ modernc.org/mathutil v1.0.0/go.mod h1:wU0vUrJsVWBZ4P6e7xtFJEhFSNsfRLJ8H458uRjg03
 modernc.org/strutil v1.0.0/go.mod h1:lstksw84oURvj9y3tn8lGvRxyRC1S2+g5uuIzNfIOBs=
 modernc.org/xc v1.0.0/go.mod h1:mRNCo0bvLjGhHO9WsyuKVU4q0ceiDDDoEeWDJHrNx8I=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.7/go.mod h1:PHgbrJT7lCHcxMU+mDHEm+nx46H4zuuHZkDP6icnhu0=
-sigs.k8s.io/controller-runtime v0.6.2 h1:jkAnfdTYBpFwlmBn3pS5HFO06SfxvnTZ1p5PeEF/zAA=
-sigs.k8s.io/controller-runtime v0.6.2/go.mod h1:vhcq/rlnENJ09SIRp3EveTaZ0yqH526hjf9iJdbUJ/E=
 sigs.k8s.io/controller-runtime v0.6.3 h1:SBbr+inLPEKhvlJtrvDcwIpm+uhDvp63Bl72xYJtoOE=
 sigs.k8s.io/controller-runtime v0.6.3/go.mod h1:WlZNXcM0++oyaQt4B7C2lEE5JYRs8vJUzRP4N4JpdAY=
 sigs.k8s.io/structured-merge-diff v0.0.0-20190525122527-15d366b2352e h1:4Z09Hglb792X0kfOBBJUPFEyvVfQWrYT/l8h5EKA6JQ=

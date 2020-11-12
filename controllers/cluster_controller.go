@@ -19,9 +19,10 @@ package controllers
 import (
 	compositev1 "github.com/darkowlzz/composite-reconciler/controller/v1"
 	"github.com/go-logr/logr"
-	conditions "github.com/openshift/custom-resource-status/conditions/v1"
+	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -34,9 +35,10 @@ import (
 type ClusterReconciler struct {
 	client.Client
 	compositev1.CompositeReconciler
-	Log    logr.Logger
-	Scheme *runtime.Scheme
-	req    ClusterRequest
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	req      ClusterRequest
+	Recorder record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=darkowlzz.space,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -49,13 +51,14 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.CompositeReconciler = compositev1.CompositeReconciler{
 		Log: r.Log.WithValues("component", "composite-reconciler"),
 		C:   r,
-		InitCondition: conditions.Condition{
-			Type:    conditions.ConditionAvailable,
+		InitCondition: conditionsv1.Condition{
+			Type:    conditionsv1.ConditionProgressing,
 			Status:  corev1.ConditionTrue,
-			Reason:  "Initialized",
-			Message: "Initialized",
+			Reason:  "Initializing",
+			Message: "Initializing",
 		},
 		FinalizerName: "cluster-controller-finalizer",
+		Recorder:      r.Recorder,
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
