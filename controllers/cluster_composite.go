@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	darkowlzzspacev1 "github.com/darkowlzz/hco/api/v1"
 )
@@ -75,11 +76,11 @@ func (r *ClusterReconciler) UpdateConditions(condns []conditionsv1.Condition) {
 
 func (r *ClusterReconciler) UpdateStatus() error {
 	r.Log.Info("updating status")
-	if reflect.DeepEqual(r.req.OriginalInstance, r.req.Instance) {
+	if reflect.DeepEqual(r.req.OriginalInstance.Status, r.req.Instance.Status) {
 		r.Log.Info("no diff found to update")
 		return nil
 	}
-	return r.Status().Update(r.req.Ctx, r.req.Instance)
+	return r.Status().Patch(r.req.Ctx, r.req.Instance, client.MergeFrom(r.req.OriginalInstance))
 }
 
 func (r *ClusterReconciler) GetObjectMetadata() metav1.ObjectMeta {
