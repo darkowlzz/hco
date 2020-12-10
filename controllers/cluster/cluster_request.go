@@ -1,4 +1,4 @@
-package controllers
+package cluster
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	eventv1 "github.com/darkowlzz/composite-reconciler/event/v1"
 	"github.com/go-logr/logr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -21,6 +22,7 @@ type ClusterRequest struct {
 	OriginalInstance *darkowlzzspacev1.Cluster
 	Ctx              context.Context
 	Log              logr.Logger
+	OwnerRef         metav1.OwnerReference
 }
 
 type ClusterReadyEvent struct {

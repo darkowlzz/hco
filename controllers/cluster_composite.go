@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	controllerv1 "github.com/darkowlzz/composite-reconciler/controller/v1"
-	eventv1 "github.com/darkowlzz/composite-reconciler/event/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,13 +13,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	darkowlzzspacev1 "github.com/darkowlzz/hco/api/v1"
+	"github.com/darkowlzz/hco/controllers/cluster"
 )
 
 func (r *ClusterReconciler) InitReconcile(ctx context.Context, req ctrl.Request) {
 	// Initialize cluster request.
-	r.req = ClusterRequest{
+	r.req = cluster.ClusterRequest{
 		Request:  req,
 		Instance: &darkowlzzspacev1.Cluster{},
 		Ctx:      ctx,
@@ -31,6 +33,16 @@ func (r *ClusterReconciler) FetchInstance() error {
 	if err := r.Get(r.req.Ctx, r.req.NamespacedName, r.req.Instance); err != nil {
 		return err
 	}
+
+	// Create an owner reference from the instance.
+	cluster := r.req.Instance
+	r.req.OwnerRef = metav1.OwnerReference{
+		APIVersion: cluster.APIVersion,
+		Kind:       cluster.Kind,
+		Name:       cluster.Name,
+		UID:        cluster.UID,
+	}
+
 	return nil
 }
 
@@ -52,19 +64,80 @@ func (r *ClusterReconciler) IsUninitialized() bool {
 
 func (r *ClusterReconciler) Initialize(condn conditionsv1.Condition) error {
 	r.UpdateConditions([]conditionsv1.Condition{condn})
+	// TODO: Maybe update the object status via API.
 	return nil
 }
 
-func (r *ClusterReconciler) FetchStatus() error {
-	// Remove pending condition and add available condition.
-	conditionsv1.RemoveStatusCondition(&r.req.Instance.Status.Conditions, conditionsv1.ConditionProgressing)
-	readyCondition := conditionsv1.Condition{
-		Type:    conditionsv1.ConditionAvailable,
-		Status:  corev1.ConditionTrue,
-		Reason:  "Ready",
-		Message: "Ready",
+func (r *ClusterReconciler) UpdateStatus() error {
+	r.Log.Info("fetching status updates", "instance", r.req.Instance.Name)
+
+	var appReady, sidecarAReady, sidecarBReady bool
+
+	// Get an app instance and set the status condition as ready.
+	appNsName := types.NamespacedName{
+		Name:      "app-" + r.req.Instance.Name,
+		Namespace: r.req.Instance.Namespace,
 	}
-	conditionsv1.SetStatusCondition(&r.req.Instance.Status.Conditions, readyCondition)
+	var app darkowlzzspacev1.App
+	if getErr := r.Get(r.req.Ctx, appNsName, &app); getErr != nil {
+		if !apierrors.IsNotFound(getErr) {
+			return fmt.Errorf("failed to get app %v for Cluster status update: %w", appNsName, getErr)
+		}
+	} else {
+		appReady = true
+	}
+	r.Log.Info("fetched app status", "ready", appReady)
+
+	// Get a sidecarA instance and set the status condition as ready.
+	sidecarANsName := types.NamespacedName{
+		Name:      "sidecara-" + r.req.Instance.Name,
+		Namespace: r.req.Instance.Namespace,
+	}
+	var sidecarA darkowlzzspacev1.SidecarA
+	if getErr := r.Get(r.req.Ctx, sidecarANsName, &sidecarA); getErr != nil {
+		if !apierrors.IsNotFound(getErr) {
+			return fmt.Errorf("failed to get sidecarA %v for Cluster status update: %w", sidecarANsName, getErr)
+		}
+	} else {
+		sidecarAReady = true
+	}
+	r.Log.Info("fetched sidecarA status", "ready", sidecarAReady)
+
+	// Get a sidecarB instance and set the status condition as ready.
+	sidecarBNsName := types.NamespacedName{
+		Name:      "sidecarb-" + r.req.Instance.Name,
+		Namespace: r.req.Instance.Namespace,
+	}
+	var sidecarB darkowlzzspacev1.SidecarB
+	if getErr := r.Get(r.req.Ctx, sidecarBNsName, &sidecarB); getErr != nil {
+		if !apierrors.IsNotFound(getErr) {
+			return fmt.Errorf("failed to get sidecarB %v for Cluster status update: %w", sidecarBNsName, getErr)
+		}
+	} else {
+		sidecarBReady = true
+	}
+	r.Log.Info("fetched sidecarB status", "ready", sidecarBReady)
+
+	fmt.Println("APP READY:", appReady)
+	fmt.Println("SIDECARA READY:", sidecarAReady)
+	fmt.Println("SIDECARB READY:", sidecarBReady)
+
+	// If all the components are ready, mark the cluster ready.
+	if appReady && sidecarAReady && sidecarBReady {
+		// Remove pending condition and add available condition.
+		conditionsv1.RemoveStatusCondition(&r.req.Instance.Status.Conditions, conditionsv1.ConditionProgressing)
+		readyCondition := conditionsv1.Condition{
+			Type:    conditionsv1.ConditionAvailable,
+			Status:  corev1.ConditionTrue,
+			Reason:  "Ready",
+			Message: "Ready",
+		}
+		conditionsv1.SetStatusCondition(&r.req.Instance.Status.Conditions, readyCondition)
+	}
+
+	// TODO: Add separate status conditions for all the components similar to
+	// the conditions in a k8s node object.
+
 	return nil
 }
 
@@ -74,8 +147,8 @@ func (r *ClusterReconciler) UpdateConditions(condns []conditionsv1.Condition) {
 	}
 }
 
-func (r *ClusterReconciler) UpdateStatus() error {
-	r.Log.Info("updating status")
+func (r *ClusterReconciler) PatchStatus() error {
+	r.Log.Info("updating status", "instance", r.req.Instance.Name)
 	if reflect.DeepEqual(r.req.OriginalInstance.Status, r.req.Instance.Status) {
 		r.Log.Info("no diff found to update")
 		return nil
@@ -91,159 +164,10 @@ func (r *ClusterReconciler) AddFinalizer(finalizer string) error {
 	return nil
 }
 
-func (r *ClusterReconciler) Cleanup() error {
-	return nil
+func (r *ClusterReconciler) Cleanup() (reconcile.Result, error) {
+	return reconcile.Result{}, nil
 }
 
-func (r *ClusterReconciler) hasApp() (bool, error) {
-	cluster := r.req.Instance
-	var app darkowlzzspacev1.App
-	nsName := types.NamespacedName{
-		Name:      "app-" + cluster.Name,
-		Namespace: cluster.Namespace,
-	}
-	if getErr := r.Get(r.req.Ctx, nsName, &app); getErr != nil {
-		if apierrors.IsNotFound(getErr) {
-			return false, nil
-		}
-		return false, getErr
-	}
-	return true, nil
-}
-
-func (r *ClusterReconciler) hasSidecarA() (bool, error) {
-	cluster := r.req.Instance
-	var sidecarA darkowlzzspacev1.SidecarA
-	nsName := types.NamespacedName{
-		Name:      "sidecara-" + cluster.Name,
-		Namespace: cluster.Namespace,
-	}
-	if getErr := r.Get(r.req.Ctx, nsName, &sidecarA); getErr != nil {
-		if apierrors.IsNotFound(getErr) {
-			return false, nil
-		}
-		return false, getErr
-	}
-	return true, nil
-}
-
-func (r *ClusterReconciler) hasSidecarB() (bool, error) {
-	cluster := r.req.Instance
-	var sidecarB darkowlzzspacev1.SidecarB
-	nsName := types.NamespacedName{
-		Name:      "sidecarb-" + cluster.Name,
-		Namespace: cluster.Namespace,
-	}
-	if getErr := r.Get(r.req.Ctx, nsName, &sidecarB); getErr != nil {
-		if apierrors.IsNotFound(getErr) {
-			return false, nil
-		}
-		return false, getErr
-	}
-	return true, nil
-}
-
-func (r *ClusterReconciler) Operate() (res ctrl.Result, event eventv1.ReconcilerEvent, err error) {
-	res = ctrl.Result{}
-	event = nil
-	err = nil
-
-	cluster := r.req.Instance
-
-	// Create an owner reference using the cluster.
-	ownerRef := metav1.OwnerReference{
-		APIVersion: cluster.APIVersion,
-		Kind:       cluster.Kind,
-		Name:       cluster.Name,
-		UID:        cluster.UID,
-	}
-
-	appExists, hasErr := r.hasApp()
-	if hasErr != nil {
-		err = hasErr
-		return
-	}
-
-	if !appExists {
-		// Create App, SidecarA and SidecarB with cluster as the owner
-		// reference.
-		appInstance := &darkowlzzspacev1.App{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            "app-" + cluster.Name,
-				Labels:          cluster.Labels,
-				Namespace:       cluster.Namespace,
-				OwnerReferences: []metav1.OwnerReference{ownerRef},
-			},
-			Spec: darkowlzzspacev1.AppSpec{
-				Image: cluster.Spec.Images.App,
-			},
-		}
-		if createErr := r.Create(r.req.Ctx, appInstance); createErr != nil {
-			r.Log.Info("failed to create app", "error", createErr)
-			err = createErr
-			return
-		}
-		// Create event and requeue.
-		event = &AppCreatedEvent{Object: cluster, AppName: appInstance.Name}
-		res = ctrl.Result{Requeue: true}
-		return
-	}
-
-	sidecarAExists, hasErr := r.hasSidecarA()
-	if hasErr != nil {
-		err = hasErr
-		return
-	}
-
-	if !sidecarAExists {
-		sidecarA := &darkowlzzspacev1.SidecarA{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            "sidecara-" + cluster.Name,
-				Labels:          cluster.Labels,
-				Namespace:       cluster.Namespace,
-				OwnerReferences: []metav1.OwnerReference{ownerRef},
-			},
-			Spec: darkowlzzspacev1.SidecarASpec{
-				Image: cluster.Spec.Images.SidecarA,
-			},
-		}
-		if createErr := r.Create(r.req.Ctx, sidecarA); createErr != nil {
-			r.Log.Info("failed to create sidecarA", "error", createErr)
-			err = createErr
-		}
-		// Create event and requeue.
-		event = &SidecarACreatedEvent{Object: cluster, SidecarAName: sidecarA.Name}
-		res = ctrl.Result{Requeue: true}
-		return
-	}
-
-	sidecarBExists, hasErr := r.hasSidecarB()
-	if hasErr != nil {
-		err = hasErr
-		return
-	}
-
-	if !sidecarBExists {
-		sidecarB := &darkowlzzspacev1.SidecarB{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            "sidecarb-" + cluster.Name,
-				Labels:          cluster.Labels,
-				Namespace:       cluster.Namespace,
-				OwnerReferences: []metav1.OwnerReference{ownerRef},
-			},
-			Spec: darkowlzzspacev1.SidecarBSpec{
-				Image: cluster.Spec.Images.SidecarB,
-			},
-		}
-		if createErr := r.Create(r.req.Ctx, sidecarB); createErr != nil {
-			r.Log.Info("failed to create sidecarB", "error", createErr)
-			err = createErr
-		}
-		// Create event and requeue.
-		event = &SidecarBCreatedEvent{Object: cluster, SidecarBName: sidecarB.Name}
-		res = ctrl.Result{Requeue: true}
-		return
-	}
-
-	return
+func (r *ClusterReconciler) Operate() (res ctrl.Result, err error) {
+	return r.Operator.Ensure(r.req.Ctx, r.req.Instance, r.req.OwnerRef)
 }

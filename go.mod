@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/darkowlzz/composite-reconciler v0.0.0-20201112064441-19572322ed9a
+	github.com/darkowlzz/composite-reconciler v0.0.0-20201209194010-3d6ef3c381d6
 	github.com/go-logr/logr v0.1.0
 	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.10.1

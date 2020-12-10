@@ -17,7 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"fmt"
+
 	compositev1 "github.com/darkowlzz/composite-reconciler/controller/v1"
+	operatorv1 "github.com/darkowlzz/composite-reconciler/operator/v1"
+	"github.com/darkowlzz/composite-reconciler/operator/v1/executor"
+	"github.com/darkowlzz/composite-reconciler/operator/v1/operand"
 	"github.com/go-logr/logr"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,16 +34,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	darkowlzzspacev1 "github.com/darkowlzz/hco/api/v1"
+	"github.com/darkowlzz/hco/controllers/cluster"
 )
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
 	client.Client
 	compositev1.CompositeReconciler
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	req      ClusterRequest
+	Log    logr.Logger
+	Scheme *runtime.Scheme
+	// req      ClusterRequest
+	req      cluster.ClusterRequest
 	Recorder record.EventRecorder
+
+	Operator operatorv1.Operator
 }
 
 // +kubebuilder:rbac:groups=darkowlzz.space,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -48,18 +57,40 @@ type ClusterReconciler struct {
 var _ compositev1.Controller = &ClusterReconciler{}
 
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.CompositeReconciler = compositev1.CompositeReconciler{
-		Log: r.Log.WithValues("component", "composite-reconciler"),
-		C:   r,
-		InitCondition: conditionsv1.Condition{
-			Type:    conditionsv1.ConditionProgressing,
-			Status:  corev1.ConditionTrue,
-			Reason:  "Initializing",
-			Message: "Initializing",
-		},
-		FinalizerName: "cluster-controller-finalizer",
-		Recorder:      r.Recorder,
+	// Setup a composite reconciler with an initial status.
+	initCondn := conditionsv1.Condition{
+		Type:    conditionsv1.ConditionProgressing,
+		Status:  corev1.ConditionTrue,
+		Reason:  "Initializing",
+		Message: "Initializing",
 	}
+	cr, err := compositev1.NewCompositeReconciler(
+		compositev1.WithCleanupStrategy(compositev1.OwnerReferenceCleanup),
+		compositev1.WithLogger(r.Log.WithValues("component", "composite-reconciler")),
+		compositev1.WithController(r),
+		compositev1.WithInitCondition(initCondn),
+	)
+	if err != nil {
+		return err
+	}
+	r.CompositeReconciler = *cr
+
+	// Create operands for various components and add them to an operator.
+
+	appOp := cluster.NewAppOperand("app-operand", r.Client, []string{}, operand.RequeueOnError)
+	sidecarAOp := cluster.NewSidecarAOperand("sidecarA-operand", r.Client, []string{"app-operand"}, operand.RequeueOnError)
+	sidecarBOp := cluster.NewSidecarBOperand("sidecarB-operand", r.Client, []string{"app-operand"}, operand.RequeueOnError)
+
+	co, err := operatorv1.NewCompositeOperator(
+		operatorv1.WithOperands(appOp, sidecarAOp, sidecarBOp),
+		operatorv1.WithEventRecorder(r.Recorder),
+		operatorv1.WithExecutionStrategy(executor.Serial),
+	)
+	if err != nil {
+		return err
+	}
+	r.Operator = co
+	fmt.Println("Operator order:", co.Order())
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&darkowlzzspacev1.Cluster{}).
