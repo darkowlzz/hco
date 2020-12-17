@@ -84,7 +84,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	co, err := operatorv1.NewCompositeOperator(
 		operatorv1.WithOperands(appOp, sidecarAOp, sidecarBOp),
 		operatorv1.WithEventRecorder(r.Recorder),
-		operatorv1.WithExecutionStrategy(executor.Serial),
+		operatorv1.WithExecutionStrategy(executor.Parallel),
 	)
 	if err != nil {
 		return err
@@ -103,12 +103,12 @@ type ChangePredicate struct {
 }
 
 func (ChangePredicate) Update(e event.UpdateEvent) bool {
-	if e.MetaOld == nil || e.MetaNew == nil {
+	if e.ObjectOld == nil || e.ObjectNew == nil {
 		// ignore objects without metadata
 		return false
 	}
 
-	if e.MetaNew.GetGeneration() != e.MetaOld.GetGeneration() {
+	if e.ObjectNew.GetGeneration() != e.ObjectOld.GetGeneration() {
 		// reconcile on spec changes
 		return true
 	}

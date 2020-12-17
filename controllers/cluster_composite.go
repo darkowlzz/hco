@@ -29,8 +29,8 @@ func (r *ClusterReconciler) InitReconcile(ctx context.Context, req ctrl.Request)
 	}
 }
 
-func (r *ClusterReconciler) FetchInstance() error {
-	if err := r.Get(r.req.Ctx, r.req.NamespacedName, r.req.Instance); err != nil {
+func (r *ClusterReconciler) FetchInstance(ctx context.Context) error {
+	if err := r.Get(ctx, r.req.NamespacedName, r.req.Instance); err != nil {
 		return err
 	}
 
@@ -68,7 +68,7 @@ func (r *ClusterReconciler) Initialize(condn conditionsv1.Condition) error {
 	return nil
 }
 
-func (r *ClusterReconciler) UpdateStatus() error {
+func (r *ClusterReconciler) UpdateStatus(ctx context.Context) error {
 	r.Log.Info("fetching status updates", "instance", r.req.Instance.Name)
 
 	var appReady, sidecarAReady, sidecarBReady bool
@@ -79,7 +79,7 @@ func (r *ClusterReconciler) UpdateStatus() error {
 		Namespace: r.req.Instance.Namespace,
 	}
 	var app darkowlzzspacev1.App
-	if getErr := r.Get(r.req.Ctx, appNsName, &app); getErr != nil {
+	if getErr := r.Get(ctx, appNsName, &app); getErr != nil {
 		if !apierrors.IsNotFound(getErr) {
 			return fmt.Errorf("failed to get app %v for Cluster status update: %w", appNsName, getErr)
 		}
@@ -94,7 +94,7 @@ func (r *ClusterReconciler) UpdateStatus() error {
 		Namespace: r.req.Instance.Namespace,
 	}
 	var sidecarA darkowlzzspacev1.SidecarA
-	if getErr := r.Get(r.req.Ctx, sidecarANsName, &sidecarA); getErr != nil {
+	if getErr := r.Get(ctx, sidecarANsName, &sidecarA); getErr != nil {
 		if !apierrors.IsNotFound(getErr) {
 			return fmt.Errorf("failed to get sidecarA %v for Cluster status update: %w", sidecarANsName, getErr)
 		}
@@ -109,7 +109,7 @@ func (r *ClusterReconciler) UpdateStatus() error {
 		Namespace: r.req.Instance.Namespace,
 	}
 	var sidecarB darkowlzzspacev1.SidecarB
-	if getErr := r.Get(r.req.Ctx, sidecarBNsName, &sidecarB); getErr != nil {
+	if getErr := r.Get(ctx, sidecarBNsName, &sidecarB); getErr != nil {
 		if !apierrors.IsNotFound(getErr) {
 			return fmt.Errorf("failed to get sidecarB %v for Cluster status update: %w", sidecarBNsName, getErr)
 		}
@@ -147,13 +147,13 @@ func (r *ClusterReconciler) UpdateConditions(condns []conditionsv1.Condition) {
 	}
 }
 
-func (r *ClusterReconciler) PatchStatus() error {
+func (r *ClusterReconciler) PatchStatus(ctx context.Context) error {
 	r.Log.Info("updating status", "instance", r.req.Instance.Name)
 	if reflect.DeepEqual(r.req.OriginalInstance.Status, r.req.Instance.Status) {
 		r.Log.Info("no diff found to update")
 		return nil
 	}
-	return r.Status().Patch(r.req.Ctx, r.req.Instance, client.MergeFrom(r.req.OriginalInstance))
+	return r.Status().Patch(ctx, r.req.Instance, client.MergeFrom(r.req.OriginalInstance))
 }
 
 func (r *ClusterReconciler) GetObjectMetadata() metav1.ObjectMeta {
@@ -164,10 +164,10 @@ func (r *ClusterReconciler) AddFinalizer(finalizer string) error {
 	return nil
 }
 
-func (r *ClusterReconciler) Cleanup() (reconcile.Result, error) {
+func (r *ClusterReconciler) Cleanup(ctx context.Context) (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func (r *ClusterReconciler) Operate() (res ctrl.Result, err error) {
-	return r.Operator.Ensure(r.req.Ctx, r.req.Instance, r.req.OwnerRef)
+func (r *ClusterReconciler) Operate(ctx context.Context) (res ctrl.Result, err error) {
+	return r.Operator.Ensure(ctx, r.req.Instance, r.req.OwnerRef)
 }

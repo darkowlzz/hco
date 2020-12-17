@@ -37,8 +37,7 @@ type AppReconciler struct {
 // +kubebuilder:rbac:groups=darkowlzz.space,resources=apps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=darkowlzz.space,resources=apps/status,verbs=get;update;patch
 
-func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
+func (r *AppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("app", req.NamespacedName)
 
 	// your logic here

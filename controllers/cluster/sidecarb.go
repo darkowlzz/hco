@@ -8,7 +8,6 @@ import (
 	"github.com/darkowlzz/composite-reconciler/operator/v1/operand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -22,6 +21,9 @@ type SidecarBOperand struct {
 	requeueStrategy operand.RequeueStrategy
 }
 
+// Compile-time assert to verify interface compatibility.
+var _ operand.Operand = &SidecarBOperand{}
+
 func (s *SidecarBOperand) Name() string {
 	return s.name
 }
@@ -34,7 +36,7 @@ func (s *SidecarBOperand) RequeueStrategy() operand.RequeueStrategy {
 	return s.requeueStrategy
 }
 
-func (s *SidecarBOperand) Ensure(ctx context.Context, obj runtime.Object, ownerRef metav1.OwnerReference) (eventv1.ReconcilerEvent, error) {
+func (s *SidecarBOperand) Ensure(ctx context.Context, obj client.Object, ownerRef metav1.OwnerReference) (eventv1.ReconcilerEvent, error) {
 	cluster, ok := obj.(*darkowlzzspacev1.Cluster)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert %v to Cluster", obj)
@@ -85,11 +87,11 @@ func (s *SidecarBOperand) hasSidecarB(ctx context.Context, instance *darkowlzzsp
 	return true, nil
 }
 
-func (s *SidecarBOperand) ReadyCheck(ctx context.Context, obj runtime.Object) (bool, error) {
+func (s *SidecarBOperand) ReadyCheck(ctx context.Context, obj client.Object) (bool, error) {
 	return true, nil
 }
 
-func (s *SidecarBOperand) Delete(ctx context.Context, obj runtime.Object) (eventv1.ReconcilerEvent, error) {
+func (s *SidecarBOperand) Delete(ctx context.Context, obj client.Object) (eventv1.ReconcilerEvent, error) {
 	return nil, nil
 }
 

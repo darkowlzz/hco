@@ -37,8 +37,7 @@ type SidecarBReconciler struct {
 // +kubebuilder:rbac:groups=darkowlzz.space,resources=sidecarbs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=darkowlzz.space,resources=sidecarbs/status,verbs=get;update;patch
 
-func (r *SidecarBReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
+func (r *SidecarBReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("sidecarb", req.NamespacedName)
 
 	// your logic here

@@ -18,8 +18,12 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 
+	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/label"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -36,6 +40,25 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+// initTracer creates a new trace provider instance and registers it as global trace provider.
+func initTracer() func() {
+	// Create and install Jaeger export pipeline.
+	flush, err := jaeger.InstallNewPipeline(
+		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
+		jaeger.WithProcess(jaeger.Process{
+			ServiceName: "hco",
+			Tags: []label.KeyValue{
+				label.String("exporter", "jaeger"),
+			},
+		}),
+		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return flush
+}
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -54,6 +77,10 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	// Initialize the tracer.
+	flush := initTracer()
+	defer flush()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
